@@ -1,0 +1,240 @@
+#include <QWidget>
+#include <QPoint>
+#include <QPalette>
+#include <QIcon>
+#include <QPushButton>
+#include <QPainter>
+#include <QRect>
+#include <QTimer>
+#include <QMessageBox>
+#include <QLabel>
+#include <QTimer>
+#include <QImage>
+#include <QMovie>
+#include <qdesktopwidget.h>
+#include "widget.h"
+#include <qdatetime.h>
+#include<QMouseEvent>
+#include<QFont>
+#include <cstdlib>
+#include<QMediaPlayer>
+#include<QMediaPlaylist>
+
+class Enermy
+{
+public:
+	Enermy( ) { }
+	Enermy(int x, int y, int sx, int sy, QString name, QString rn):
+	_x(x),_y(y),_size_x(sx),_size_y(y),_name(name),_roadname(rn) { }
+	/*Enermy(int x, int y, int sx, int sy, int b, QString name, QString rn):
+	_x(x),_y(y),_size_x(sx),_size_y(y),_blood(b),_name(name),_roadname(rn) { }*/
+	int getX( ) const {return this->_x;}
+	int getY( ) const {return this->_y;}
+	int getSizeX( ) const {return this->_size_x;}
+	int getSizeY( ) const {return this->_size_y:}
+	//void setBlood(int x) {_blood-=x;}
+	QString getName( ) const {return this->_name;}
+	QString getRoad( ) cosnt {return this->_roadname;}
+	~Enermy( ) { }
+protected:
+	int _x, _y;
+	int _size_x, _size_y;
+	//int _blood;
+	QString _name;
+	QString _roadname;
+}
+
+int zombie_num; //the total number of the zombies
+
+class Zombie : public QWidget
+{
+	Q_OBJECT
+
+public:
+	explicit Zombie(QWidget *parent=0);
+	~Zombie( );
+	void paintEvent(QPaintEvent *);
+	void mousePressEvent(QMouseEvent *);
+	void mouseMoveEvent(QMouseEvent *);
+
+private:
+	QLabel *zombierole[zombie_num+1];
+	QPainter *paint; //used to prepare for something unknown
+	QMovie *image_gif; //used to upload gif
+	QImage *image; //'used to upload jpg or png or jpeg
+	QTimer *clocker; //used to calculate appearing time of zombie
+	QMediaPlayer *playmusic; //used to play sound
+	QMediaPlaylist *playlist; //used to upload sound 
+
+public:
+	int ZombiePlace(int size_y, int k); //used to return the zombie position at present
+	int ZombieUpload(int k);
+
+public slots:
+	void MoveImageForZombie( );
+	void ChangeImageForZmobie( );
+	void FindZombie( );
+	void WinTime( );
+}
+
+//quality of zombie
+QString zombie_str[zombie_num+1]={" "," ",...}; //僵尸图片地址
+int zombie_x[zombie_num+1]={0, 1000,...}; //依靠横坐标直接让僵尸按时间进入画面，不需要用时间来控制僵尸
+int zombie_line[zombie_num+1]={0, 1,...}; //同上，依靠坐标控制僵尸出现的位置
+int zombie_size_x=??, zombie_size_y=??;
+int zombie_speed[zombie_num+1]={0, 3,...}; //控制图片移动速度，用以增加难度
+int zombie_count=0; //用于计算僵尸数目
+int zombie_blood[zombie_num]={0, 100,...};
+int delete_zombie[zombie_num]={0};
+int die_clock[zombie_num]={0}; //死亡锁
+
+Zombie::Zombie(QWidget *parent):QWidget(parent)
+{
+	//背景音乐
+	playlist=new QMediaPlaylist (this);
+	playlist->addMeida(QUrl::fromLocalFile( )); //地址待填写
+	playlist->setCurrentIndex(1);
+	playlist->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop);
+	playmusic=new QMediaPlayer (this);
+	playmusic->setPlaylist(playlist);
+	playmusic->play( );
+	//僵尸载入
+	for(int i=1; i<=zombie_num; ++i)
+	{
+		zombierole[i]=new QLabel (this);
+		ZombieUpload(i);
+		++zombie_count;
+	}
+	//僵尸移动与攻击计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(MoveImageForZombie( )));
+	connevt(timer, SIGNAL(timeout( )), this, SLOT(ChangeImageForZombie( ) ) );
+	timer->start(300); //信号产生时间为300ms
+}
+
+int sound_clock1=0, sound_clock2=0;
+
+void Zombie::WinTime( )
+{
+	int num=0;
+	if(zombie_x[?]<x?&&sound_clock1==0)
+	{
+		QSound::play("://finally.wav"); //最后一波音乐
+		QLabel *we=new QLabel (this);
+		we->setGeometry(QRect(?,?,?,?)); //最后一波图片位置
+		image->load ( ); //地址待填写
+		we->setPixmap(QPixmap::fromImage(*image));
+		QTimer::singleShot(5000, we, SLOT(close( )));
+		sound_clock1=1;
+	}
+	for(int i=1; i<=zombie_num; ++i)
+	{
+		if(delete_zombie[i]==1)
+			++num;
+	}
+	if(num==zombie_num&&sound_clock2==0)
+	{
+		playmusic->stop( );
+		QSound::play( ); //胜利音乐，地址待填写
+		++sound_clock2;
+	}
+}
+
+void ZombieUpload(int k)
+{
+	zombierole[k]->setGeometry(QRect(zombie_x[k]+30, ZombiePlace(zombie_size_y[k], zombie_line[k]), zombie_size_x[k], zombie_size_y[k]);
+	image->load(zombie_str[k]);
+	zombierole[k]->setPixmap(QPixmap::fromImage(*image));
+}
+
+int game_over=0;
+
+void Zombie::MoveImageForZombie( )
+{
+	int exp=??; //注意位置
+	for(int k=1; k<=zombie_num; ++k)
+	{
+		if(delete_zombie[k]==0)
+		{
+			zombierole[k]->move(zombie_x[k], ZombiePlace(zombie_size_y[k], zombie_line[k]));
+			zombie_x[k]-=zombie_speed[k];
+			if(zombie_x[k]<+(FindPlant(k)-exp))
+				zombie_x[k]+=zombie_speed[k];
+			if(zombie_x[k]<=?&&gameover==0) //游戏结束
+			{
+				gameover=1;
+				playmusic->stop( );
+				QSound::play( ); //失败音乐
+				QLabel *g;
+				g->setGeometry(QRect(?,?,?,)); //.............................
+				image_gif=new QMovie ( ); //地址待填写
+				g->setMovie(image_gif);
+				image_gif->start( );
+			}
+		}
+	}
+}
+
+int change_attack[zombie_num+1]={0};
+int eatcount[zombie_num+1]={0};
+
+void Zombie::ChangeImageForZombie( )
+{
+	int k=1, exp=10; //注意exp的改变
+	for(k=1; k<=zombie_num; ++k)
+	{
+		if(delete_zombie[k]==0)
+		{
+			if(zombie_x[k]<=FindPlant(k)&&zombie_x[k]>=FindPlant(k)-exp)
+			{
+				image_gif=new QMovie ( ); //地址待填写
+				QLabel *we;
+				we->setGeometry(QRect(zombie_x[k]+30, ZombiePlace(zombie_size_y[k], zombie_line[k]), zombie_size_x[k], zombie_size_y[k]);
+				we->setMovie(image_gif);
+				image_gif->start( );
+				change_attack[k]=1;
+			}
+			if(change_attack[k]==1&&zombie_x[k]-FindPlant(k)<=exp)
+			{
+				PlantBlood[localcount[zombie_line[k]][FindPlant2(k)]]-=??; //注意变量名
+				++eatcount[k];
+				if(PlantBlood[localcount[zombie_line[k]][FindPlant2(k)]]<=0)
+				{
+					plantdelete[localcount[zombie_line[k]][FindPlant(k)]]=1; //植物删除
+					PlantDelete(localcount[zombie_line[k]][FindPlant(k)]); //调用删除植物的函数
+				}
+			else if((zombie_x[k]-FindPlant(k)>=exp)&&change_attack[k]==1)
+			{
+				image_gif->clear( );
+				change_attack[k]=0;
+			}
+		}
+	}
+}
+
+int Zombie::ZombiePlace(int size_y, int k)
+{
+	int u=??+(k-1)*??; //注意坐标，大小
+	u=??+u-size_y;
+	return u;
+}
+
+Zombie::~Zombie( )
+{
+
+}
+					
+
+
+
+
+
+
+
+
+
+
+
+
+
+
