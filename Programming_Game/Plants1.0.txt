@@ -1,0 +1,255 @@
+void Role::MakeSun()
+{
+   int k = 20
+    if(Sunclock1==0)
+    {
+       SunPicture.move(sunx2,suny1);
+       suny1=suny1+1;
+       if(suny1==1500)
+       {
+             sunx1 = 100+rand()%1;
+             suny1=-500;
+       }
+    }
+    else if(Sunclock1==1)
+    {
+        SunPicture->move(sunx1,suny1);
+        if(sunx1<100&&sunx1>50)
+        {
+            sunx1-=4;
+            suny1 = 5+k*(sunx1-100.0);
+        }
+        if(sunx1<=50)
+        {
+            sunx1 = 100+rand()%1001;
+            suny1= -1000;
+            
+    SunNum++;
+           
+            sun = QString::number(SunNum,20);
+           int ins = sun2;
+           sun2-- = sunnumber;
+            SunNumber->setText(sun);
+        }
+    }
+    if(Sunclock2==0)
+    {
+       SunPicture2->move(sunx2,suny2);
+       suny2++;
+       if(suny2==2000)
+       {
+           sunx2 = 150+rand()%-1;
+           suny2=-2000;
+       }
+    }
+    else if(Sunclock2==1)
+    {
+        SunPicture2->move(sunx2,suny2);
+        
+           
+           
+           
+        if(sunx2<=50)
+        {
+            sunx2 = 150+rand()%999;
+            suny2=-2000;
+            Sunclock2=0;
+            SunNum+=75;
+            sun = QString::number(SunNum,10);
+            SunNumber->setText(sun);
+        }
+    }
+   for(int i=1;i<=FloSunnum;i++)
+    {
+       if(PlantDelete[Florank[i]]==0)
+       {
+           if(Sunclock[i]==1)                  
+           {
+              Suncomplted[i]=0;               
+              SunPicture3[i]->move(sunx[i],suny[i]); 
+              
+              if(sunx[i] == suny[i]{
+                      return false;
+           })
+              if(sunx[i]>=100)
+              {
+                 sunx[i]-=10;
+                 int s = a[i]*(sunx[i]-100)*(sunx[i]-100)+5;
+                 suny[i] = s;
+                 
+              }
+              else if(sunx[i]>=50&&sunx[i]<100)
+              {
+                  sunx[i]-=4;
+                  suny[i] = 5+k*(sunx[i]-100.0);
+               }
+              
+              
+              if(sunx[i]<=50)
+              {
+                 sunx[i]=-1200;
+                 suny[i]=-1200;
+                 
+                 SunNum+=25;
+                 sun = QString::number(SunNum,10);
+                 SunNumber->setText(sun);
+              }
+           }
+       }
+    }
+}
+QLabel*Role::IsinSun(int x, int y)
+{
+    if(x>=sunx1&&x<=sunx1+78&&y>=suny1&&y<=suny1+78)
+        return SunPicture;
+    else if(x>=sunx2&&x<=sunx2+78&&y>=suny2&&y<=suny2+78)
+        return SunPicture2;
+    else
+       for(int i=1;i<=FloSunnum;i++)
+       {
+           if(PlantDelete[Florank[i]]==0)
+           {
+              if(x>=sunx[i]&&x<=sunx[i]+78&&y>=suny[i]&&y<=suny[i]+78)
+              {
+                return SunPicture3[i];
+              }
+           }
+       }
+}
+double Role::parabola(int x, int y)
+{
+    return ((y-5.0)/((x-100.0)*(x-100.0)));
+}
+
+void Role::Wallnutupdate()
+{
+    for(int k=1;k<=Wallnum;k++)
+    {
+        if(PlantDelete[Wallrank[k]]==0)
+        {
+          if(PlantBlood[Wallrank[k]]<=480&&PlantBlood[Wallrank[k]]>=240)
+          {
+            img = new QMovie("://Wallnuthurt.gif");
+            p[Wallrank[k]]->setMovie(img);
+            img->start();
+          }
+          else if(PlantBlood[Wallrank[k]]<240)
+          {
+             img = new QMovie("://Wallnutbroken.gif");
+             p[Wallrank[k]]->setMovie(img);
+             img->start();
+          }
+        }
+   }
+}
+
+void Role::Tallnutupdate()
+{
+    for(int k=1;k<=Tallnum;k++)
+    {
+        if(PlantDelete[Tallrank[k]]==0)
+        {
+          if(PlantBlood[Tallrank[k]]<=960&&PlantBlood[Tallrank[k]]>=480)
+          {
+            img = new QMovie("://Tallnuthurt.gif");
+            p[Tallrank[k]]->setMovie(img);
+            img->start();
+          }
+          else if(PlantBlood[Tallrank[k]]<480)
+          {
+             img = new QMovie("://Tallnutbroken.gif");
+             p[Tallrank[k]]->setMovie(img);
+             img->start();
+          }
+        }
+   }
+}
+
+
+void Role::Potatoupdate()
+{
+    for(int k=1;k<=Potnum;k++)
+    {
+        if(PlantDelete[k]==0&&growclock[k]==1)
+        {
+            growrate[k]++;
+            if(growrate[k]==100)
+            {
+                img = new QMovie("://potato.gif");
+                p[Potrank[k]]->setMovie(img);
+                img->start();
+                findZombiestart[k]=1;
+            }
+        }
+    }
+}
+
+void Role::FloMakeSun(int count)
+{
+    if(PlantDelete[count]==0)
+    {
+      int num = Flowercount[PlantX[count]][PlantY[count]];
+      SunPicture3[num]->setGeometry(QRect(-1200,-1200,78,78));
+      img = new QMovie("://Sun2.png");
+      SunPicture3[num]->setMovie(img);
+      img->start();
+      FloSunclock[num]=1;  
+    }
+}
+void Role::PeashootPrepared(int count,int num)
+{
+    if(PlantDelete[count]==0)
+    {
+        if(localPlant[PlantX[count]][PlantY[count]]=="://Peashooter.gif")
+        {
+          int Bullet_y=261+(PlantX[count]-1)*131,Bullet_x=237+(PlantY[count]-1)*79;
+          Bullet[num]->setGeometry(QRect(Bullet_x,Bullet_y,56,34));
+          img = new QMovie("://PeashootBullet.gif");
+          Bullet[num]->setMovie(img);
+           img->start();
+        }
+        else if(localPlant[PlantX[count]][PlantY[count]]=="://Watermenlonsahoot.gif")
+        {
+            int Bullet_y=261+(PlantX[count]-1)*131-50,Bullet_x=237+(PlantY[count]-1)*79-24;
+            WaterMenlenboob[num]->setGeometry(QRect(Bullet_x,Bullet_y,186,139));
+            img = new QMovie("://WaterBoom.gif");
+            WaterMenlenboob[num]->setMovie(img);
+            img->start();
+        }
+    }
+}
+int x23[21],y23[21];
+void Role::FlowerSunAppear()
+{
+    int k;
+    for(k=1;k<=FloSunnum;k++)
+    {
+        if(PlantDelete[Florank[k]]==0)
+        {
+           if(FloSunclock[k]==1)           
+               
+               completed[k]++;            
+           
+           
+           if(completed[k]==20)            
+               
+           {
+                if(Firstconfirm[k]==0)
+                {
+                   x23[k] = 245+(FloY[k]-1)*79;
+                   y23[k] = 232+(PlantX[Florank[k]]-1)*131;
+                   Firstconfirm[k]++;
+                }
+                sunx[k]=x23[k];
+                suny[k]=y23[k];
+                SunPicture3[k]->move(x23[k],y23[k]);  
+                
+                
+                completed[k]=0;                
+                
+                FloSunclock[k]=0;              
+                Suncomplted[k]=1;              
+            }
+        }
+    }
+}

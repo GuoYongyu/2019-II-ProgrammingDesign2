@@ -1,0 +1,618 @@
+#include <QWidget>
+#include <QPoint>
+#include <QPalette>
+#include <QIcon>
+#include <QPushButton>
+#include <QPainter>
+#include <QRect>
+#include <QTimer>
+#include <QMessageBox>
+#include <QLabel>
+#include <QTimer>
+#include <QImage>
+#include <QMovie>
+#include <qdesktopwidget.h>
+#include "widget.h"
+#include <qdatetime.h>
+#include<QMouseEvent>
+#include<QFont>
+#include <cstdlib>
+#include<QMediaPlayer>
+#include<QMediaPlaylist>
+
+/*class Enermy
+{
+public:
+	Enermy( ) { }
+	Enermy(int x, int y, int sx, int sy, QString name, QString rn):
+	_x(x),_y(y),_size_x(sx),_size_y(y),_name(name),_roadname(rn) { }
+	/*Enermy(int x, int y, int sx, int sy, int b, QString name, QString rn):
+	_x(x),_y(y),_size_x(sx),_size_y(y),_blood(b),_name(name),_roadname(rn) { }*/
+	int getX( ) const {return this->_x;}
+	int getY( ) const {return this->_y;}
+	int getSizeX( ) const {return this->_size_x;}
+	int getSizeY( ) const {return this->_size_y:}
+	//void setBlood(int x) {_blood-=x;}
+	QString getName( ) const {return this->_name;}
+	QString getRoad( ) cosnt {return this->_roadname;}
+	~Enermy( ) { }
+protected:
+	int _x, _y;
+	int _size_x, _size_y;
+	//int _blood;
+	QString _name;
+	QString _roadname;
+}*/
+
+
+class Zombie : public QWidget
+{
+	Q_OBJECT
+
+public:
+	explicit Zombie(QWidget *parent=0);
+	~Zombie( );
+	void paintEvent(QPaintEvent *);
+	void mousePressEvent(QMouseEvent *);
+	void mouseMoveEvent(QMouseEvent *);
+
+private:
+//for zombies
+	QLabel *zombierole[zombie_num+1];
+	QPainter *paint; //used to prepare for something unknown
+	QMovie *image_gif; //used to upload gif
+	QImage *image; //'used to upload jpg or png or jpeg
+	QTimer *timer; //used to calculate appearing time of zombie
+	QMediaPlayer *playmusic; //used to play sound
+	QMediaPlaylist *playlist; //used to upload sound
+
+//for botanies
+	QLabel *golden; //金币值
+	QLabel *monkey; //六小龄童
+	QLabel *caixukun; //蔡徐坤
+	QLabel *italy; //意大利炮
+	QLabel *bily; //比利海灵顿
+	QLabel *shovel; //铲子
+	QLabel *monkey_pic[21]; //数量可变，即格子数可变
+	QLabel *caixukun_pic[21];
+	QLabel *italy_pic[21];
+	QLabel *bily_pic[21[;
+	QLabel *stick[21]; //金箍棒
+	QLabel *gameover;
+	QLabel *bullet[21];
+	QLabel *p[51]; //植物
+
+public:
+//for zombies
+	int ZombiePlace(int size_y, int k); //used to return the zombie position at present
+	int ZombieUpload(int k);
+
+//for botanies
+	int FindPlant(int line); //找植物位置
+	int FindPlant2(int line);
+	void draw(QLabel *s, QString &str, int x, int y, int size_x, int size_y); //种植物
+	bool PlantLocal(int x, int y); //判断该位置是否种下了植物
+	int CardLocal(int x, int y); //返回卡片的位置，确定是什么卡
+	void MonkeyUpload(QString &str, int i);
+	void ItalyUpload(QString &str, int i);
+	void CaixukunUpload(QString &str, int i);
+	void Explode(int i); //爆炸
+	void BilyUpload(QString &str, int i);
+	void ItalyPrepare(int count, int num); //炮弹准备
+	void ShovelPlant(int x, int y); //铲除植物
+	void PlantDelete(int i); //删除死去或铲去的植物
+	bool IsFrontAttack(int i); //是否为炮弹首要攻击目标
+	void ItalyShoot(int count, int num); //意大利炮准备攻击
+
+public slots:
+//for zombies
+	void MoveImageForZombie( );
+	void ChangeImageForZmobie( );
+	void FindZombie( );
+	void WinTime( );
+
+//for botanies
+	void ItalyAttack( );
+
+	void MonkeyUpdate( );
+	void BilyUpdate( );
+
+	void GoldenAdd( );
+
+}
+
+//quality of zombie
+int zombie_num; //the total number of the zombies
+QString zombie_str[zombie_num+1]={" "," ",...}; //僵尸图片地址
+int zombie_x[zombie_num+1]={0, 1000,...}; //依靠横坐标直接让僵尸按时间进入画面，不需要用时间来控制僵尸
+int zombie_line[zombie_num+1]={0, 1,...}; //同上，依靠坐标控制僵尸出现的位置
+int zombie_size_x=??, zombie_size_y=??;
+int zombie_speed[zombie_num+1]={0, 3,...}; //控制图片移动速度，用以增加难度
+int zombie_count=0; //用于计算僵尸数目
+int zombie_blood[zombie_num]={0, 100,...};
+int delete_zombie[zombie_num]={0};
+int die_clock[zombie_num]={0}; //死亡锁
+
+//quality for botany
+int plant_size_x=??, plant_size_y=??; //待填写
+int plant_blood[31]={0}; //待填写
+int plant_delete[31]={0}; //待填写
+int monkey_allnum=1, italy_allnum=1, caixukun_allnum=1, bily_allnum=1; //种下去植物的数量
+QString LocalPlant[5][10]; //种下去的植物的类型
+int LocalCount[5][10]={0}; //记录该位置植物是第几个
+int plant_count=1; //植物计数
+int plant_x[31]={0}, plant_y={0};
+//坚果墙（比利）
+int bily_count[5][10]={0}; //记录某一位置的比利是第几个
+int bily_num=0;
+int bily_rank[21]={0};
+//豌豆射手（意大利炮）
+int italy_count[5][10]={0};
+int italyX[21]={0}, italyY[21]={0};
+int first_confirm[21]={0}; //是否为第一次使用
+int bullet_num=0;
+int bullet_clock[21]={0}; //子弹保险
+int italy_rank[21]={0}; //记录第i个射手在所有植物中是第几
+//炸弹（蔡徐坤）
+int caixukun_count[5][10]={0};
+int caixukunX[21]={0}, caixukunY[21]={0};
+int boom_num=0;
+int caixukun_rank[21]={0};
+//食人花（猴哥）
+int monkey_count[5][10]={0};
+int monkey_num=0;
+int monkey_rank[21]={0};
+int monkey_clock[21]={0}; //开始吃
+int monkey_digest[21]={0}; //开始消化
+int monkey_eattime[21]={0};
+int eating[21]={0};
+//区域
+int local[5][10]={0};
+//金币数
+QString money;
+long golden_num=300;
+int golden_clock1=0, golden_clock2=0, golden_clock[21]={0};
+//铲子处理
+int shovel_clock=0;
+
+Zombie::Zombie(QWidget *parent):QWidget(parent)
+{
+	//背景图片
+	this->setMouseTracking(true);
+	this->setAutoFillBackground(true);
+	this->setWindowTitle(""); //待填写
+	this->setWindowIcon(QIcon("")); //待填写
+	this->resize(??,??); //改变背景图片大小
+	QPalette palete;
+	palete.setBrush(QPalette::Background, QBrush(QPixmap("").scaled(this->size( )))); //游戏背景缩放
+	this->setPalette(palete);
+
+	//设置金币栏
+	golden=new QLabel (this);
+	QFont ft("Cyrillic", ??, ??); //待填写
+	golden.setFont(ft);
+	QPalette pa;
+	pa.setColor(QPalette::WindowText, Qt::black);
+	golden.setPalette(pa);
+	golden.setGeometry(QRect(??, ??, ??, ??)); //待填写
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(GoldenAdd( )));
+	timer->start(1000);
+
+	//子弹
+	for(int i=1； i<21; ++i)
+		bullet[i]=new QLabel (this);
+
+	//植物
+	for(int i=1; i<51; ++i)
+		p[i]=new QLabel (this);
+	
+	//植物卡片
+	for(int i=1; i<21; i++)
+	{
+		italy_pic[i]=new QLabel (this);
+		bily_pic[i]=new QLabel (this);
+		monkey_pic[i]=new QLabel (this);
+		caixukun_pic[i]=new QLabel (this);
+	}
+	image=new QImage;
+
+	//游戏结束
+	gameover=new QLabel (this);
+
+	//铲子
+	shovel=new QLabel (this);
+	shovel->setGeometry(QRect(??, ??, ??, ??)); //待填写
+	image->load(""); //待填写
+	shovel->setPixmap(QPixmap::fromImage(*image));
+
+	//找僵尸计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(FindZombie( )));
+	timer->start(5);
+
+	//意大利炮攻击计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(ItalyAttack( )));
+	timer->start(1);
+
+	//比利计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(BilyUpdate( )));
+	timer->start(1000);
+	
+	//猴哥计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(MonkeyUpdate( )));
+	timer->start(1000);
+	
+	//胜利计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(WinTime( ));
+	timer->start(500);
+
+	//背景音乐
+	playlist=new QMediaPlaylist (this);
+	playlist->addMeida(QUrl::fromLocalFile( )); //地址待填写
+	playlist->setCurrentIndex(1);
+	playlist->setPlaybackMode(QMediaPlaylist::CurrentItemInLoop);
+	playmusic=new QMediaPlayer (this);
+	playmusic->setPlaylist(playlist);
+	playmusic->play( );
+
+	//僵尸载入
+	for(int i=1; i<=zombie_num; ++i)
+	{
+		zombierole[i]=new QLabel (this);
+		ZombieUpload(i);
+		++zombie_count;
+	}
+
+	//僵尸移动与攻击计时器
+	timer=new QTimer (this);
+	connect(timer, SIGNAL(timeout( )), this, SLOT(MoveImageForZombie( )));
+	connevt(timer, SIGNAL(timeout( )), this, SLOT(ChangeImageForZombie( ) ) );
+	timer->start(300); //信号产生时间为300ms
+}
+
+int sound_clock1=0, sound_clock2=0;
+
+void Zombie::GoldenAdd( )
+{
+	golden_num+=??; //待填写
+	money=QString::number(golden_num, 10);
+	golden->setText(money);
+}
+
+void Zombie::WinTime( )
+{
+	int num=0;
+	if(zombie_x[?]<x?&&sound_clock1==0)
+	{
+		QSound::play("://finally.wav"); //最后一波音乐
+		QLabel *we=new QLabel (this);
+		we->setGeometry(QRect(?,?,?,?)); //最后一波图片位置
+		image->load ( ); //地址待填写
+		we->setPixmap(QPixmap::fromImage(*image));
+		QTimer::singleShot(5000, we, SLOT(close( )));
+		sound_clock1=1;
+	}
+	for(int i=1; i<=zombie_num; ++i)
+	{
+		if(delete_zombie[i]==1)
+			++num;
+	}
+	if(num==zombie_num&&sound_clock2==0)
+	{
+		playmusic->stop( );
+		QSound::play( ); //胜利音乐，地址待填写
+		++sound_clock2;
+	}
+}
+
+void ZombieUpload(int k)
+{
+	zombierole[k]->setGeometry(QRect(zombie_x[k]+30, ZombiePlace(zombie_size_y, zombie_line[k]), zombie_size_x[k], zombie_size_y[k]);
+	image->load(zombie_str[k]);
+	zombierole[k]->setPixmap(QPixmap::fromImage(*image));
+}
+
+int game_over=0;
+
+void Zombie::MoveImageForZombie( )
+{
+	int exp=??; //注意位置
+	for(int k=1; k<=zombie_num; ++k)
+	{
+		if(delete_zombie[k]==0)
+		{
+			zombierole[k]->move(zombie_x[k], ZombiePlace(zombie_size_y, zombie_line[k]));
+			zombie_x[k]-=zombie_speed[k];
+			if(zombie_x[k]<+(FindPlant(k)-exp))
+				zombie_x[k]+=zombie_speed[k];
+			if(zombie_x[k]<=?&&gameover==0) //游戏结束
+			{
+				gameover=1;
+				playmusic->stop( );
+				QSound::play( ); //失败音乐
+				QLabel *g;
+				g->setGeometry(QRect(?,?,?,)); //.............................
+				image_gif=new QMovie ( ); //地址待填写
+				g->setMovie(image_gif);
+				image_gif->start( );
+			}
+		}
+	}
+}
+
+int change_attack[zombie_num+1]={0};
+int eatcount[zombie_num+1]={0};
+
+void Zombie::ChangeImageForZombie( )
+{
+	int k=1, exp=10; //注意exp的改变
+	for(k=1; k<=zombie_num; ++k)
+	{
+		if(delete_zombie[k]==0)
+		{
+			if(zombie_x[k]<=FindPlant(k)&&zombie_x[k]>=FindPlant(k)-exp)
+			{
+				image_gif=new QMovie ( ); //地址待填写
+				QLabel *we;
+				we->setGeometry(QRect(zombie_x[k]+30, ZombiePlace(zombie_size_y[k], zombie_line[k]), zombie_size_x[k], zombie_size_y[k]);
+				we->setMovie(image_gif);
+				image_gif->start( );
+				change_attack[k]=1;
+			}
+			if(change_attack[k]==1&&zombie_x[k]-FindPlant(k)<=exp)
+			{
+				PlantBlood[localcount[zombie_line[k]][FindPlant2(k)]]-=??; //注意变量名
+				++eatcount[k];
+				if(PlantBlood[localcount[zombie_line[k]][FindPlant2(k)]]<=0)
+				{
+					plantdelete[localcount[zombie_line[k]][FindPlant(k)]]=1; //植物删除
+					PlantDelete(localcount[zombie_line[k]][FindPlant(k)]); //调用删除植物的函数
+				}
+			else if((zombie_x[k]-FindPlant(k)>=exp)&&change_attack[k]==1)
+			{
+				image_gif->clear( );
+				change_attack[k]=0;
+			}
+		}
+	}
+}
+
+int Zombie::ZombiePlace(int size_y, int k)
+{
+	int u=??+(k-1)*??; //注意坐标，大小
+	u=??+u-size_y;
+	return u;
+}
+
+void Zombie::draw(QLabel *s,QString &str,int x,int y,int size_x,int size_y)   //放置植物
+{
+	for(int j=0; j<4; ++j)
+		if(y>=??&&y<=??) //待填写
+		{
+			for(int i=0; i<6; ++i)
+			{
+				if(x>=??&&x<=??) //待填写
+				{
+					x=??;
+					y=??;
+					local[j+1][i+1]=1;
+					LocalPlant[j+1][i+1]=str;
+					LocalCount[j+1][i+1]=plant_count;
+					plant_x[plant_count]=j+1;
+					plant_y[plant_count]=i+1;
+					plant_count++;
+				}
+			}
+		}
+	if(str=="") //为比利
+	{
+		bily_allnum++;
+		bily_rank[bily_allnum]=plant_count-1;
+		bily_count[plant_x[plant_count-1]][plant_y[plant_count-1]]=bily_allnum;
+		golden_num-=??; //待填写
+		money=QString::number(golden_num, 10);
+		golden->setText(golden_num);
+		plant_blood[plant_count-1]=??; //待填写
+	}
+	if(str=="") //为猴哥
+	{
+		monkey_allnum++;
+		monkey_rank[monkey_allnum]=plant_count-1;
+		monkey_count[plant_x[plant_count-1]][plant_y[plant_count-1]]=monkey_allnum;
+		golden_num-=??; //待填写
+		money=QString::number(golden_num, 10);
+		golden->setText(golden_num);
+		plant_blood[plant_count-1]=??; //待填写
+	}
+	if(str=="") //意大利炮
+	{
+		bullet_num++;
+		italy_rank[bullet_num]=plant_count-1;
+		italy_count[palnt_x[plant_count-1]][plant_y[plant_count-1]]=bullet_num;
+		italyX[bullet_num]=plant_x[plant_count-1];
+		italyY[bullet_num]=plant_y[plant_count-1];
+		ItalyShoot(plant_count-1, bullet_num);
+		golden_num-=??; //待填写
+		money=QString::number(golden_num, 10);
+		golden->setText(golden_num);
+		plant_blood[plant_count-1]=??; //待填写
+	}
+	if(str=="") //为蔡徐坤
+	{
+		boom_num++;
+		caixukun_rank[boom_num]=plant_count-1;
+		caixukun_count[plant_x[plant_count-1]][plant_y[plant_count-1]]=boom_num;
+		caixukunX[boom_num]=plant_x[plant_count-1];
+		caixukunY[boom_num]=plant_y[plant_count-1];
+		golden_num-=??; //待填写
+		money=QString::number(golden_num, 10);
+		golden->setText(golden_num);
+		plant_blood[plant_count-1]=??; //待填写
+	}
+	s->setGeometry(QRect(x, y, size_x, size_y));
+	image->load(str);
+	s->setPixmap(QPixmap::fromImage(*image));
+}
+
+void Zombie::ItalyPrepare(int count, int num)
+{
+	if(plant_delete[count]==0)
+	{
+		if(LocalCount[plant_x[count]][plant_y[count]]=="") //待填写，意大利炮地址
+		{
+			int bullet_y=??, bullet_x=??; //待填写
+			bullet[num]->setGeometry(QRect(bullet_x, bullet_y, ??, ??)); //待填写
+			image->load(""); //待填写，子弹地址
+			bullet[num]->setPixmap(QPixmap::fromImage(*image));
+		}
+	}
+}
+
+bool IsFrontAttack(int j)
+{
+	for(int i=1; i<zombie_num; ++i)
+	{
+		if(delete_zombie[i]==0&&zombie_line[i]==zombie_line[j])
+		{
+			if(zombie_x[i]<zombie_x[j])
+				return false;
+		}
+	}
+	return true;
+}
+
+void Zombie::FindZombie( )
+{
+	int i, j;
+	for(i=1; i<plant_count-1; ++i)
+	{
+		if(plant_delete[i]==0)
+		{
+			if(LocalPlant[plant_x[i]][plant_y[i]]=="") //意大利炮地址
+			{
+				for(j=1; j<=zombie_num; ++j)
+				{
+					if(delete_zombie[j]==0)
+					{
+						if(zombie_line[j]!=plant_x[i])
+							continue;
+						if(zombie_x[j]+??<=??&&IsFrontAttack(j)) //待填写
+							bullet_clock[italy_count[plant_x[i]][plant_y[i]]]=j;
+					}
+				}
+			}
+			else if(LocalPlant[plant_x[i]][plant_y[i]]=="") //蔡徐坤地址，炸弹
+			{
+				for(j=1; j<=zombie_num; ++j)
+				{
+					if(delete_zombie[j]==0)
+					{
+						if(zombie_line[j]!=plant_x[i])
+							continue;
+						if(zombie_x[j]+?<=??&&zombie_x[j]+?>=??) //待填写，考虑植物位置
+							Explode(i);
+					}
+				}
+			}
+			else if(LocalPlant[[lant_x[i]][plant_y[i]]=="") //猴子地址
+			{
+				for(j=1; j<=zombie_num; ++j)
+				{
+					if(delete_zombie[j]==0)
+					{
+						if(zombie_line[j]!=plant[x])
+							continue;
+						if(zombie_x[j]+?<=??&&zombie_x[j]+?>=??) //待填写，考虑植物位置
+							monkey_clock[monkey_count[plant_x[i]][plant_y[i]]]=j;
+					}
+				}
+			}
+}
+
+void Zombie::MonkeyUpdate( )
+{
+	for(int k=1; k<monkey_num; ++k)
+	{
+		if(plant_delete[monkey_rank[k]==0)
+		{
+			if(monkey_clock[k]!=0&&monkey_time[k]<2)
+			{
+				image->load(""); //咀嚼图片地址
+				p[monkey_rank[k]]->setPixmap(QPixmap::fromImage(*image));
+				monkey_eattime[k]++;
+			}
+			if(monkey_eattime[k]>2)
+			{
+				image->load(""); //消化图片
+				p[monkey_rank[k]]->setPixmap(QPixmap::fromImage(*image));
+				if(eating[k]==0)
+				{
+					delete_zombie[monkey_clock[k]]=1;
+					zombierole[monkey_clock[k]]->move(??, ??); //僵尸移动到界面外
+					eating[k]=1;
+					for(int i=1; i<=bullet_num; ++i)
+					{
+						if(plant_delete[italy_rank[i]]==0&&plant_x[italy_rank[i]]==zombie_line[monkey_clock[k]])
+							bullet[i]->move(??, ??); //待填写，注意前面与italyY[i]有关，后面与italyX[i]有关
+					}
+				}
+				monkey_time[k]++;
+			}
+			if(monkey_time[k]>=60)
+			{
+				image->load(""); //换回原来的图片
+				p[monkey_rank[k]]->setPixmap(QPixmap::fromImge(*image));
+				monkey_time[k]=0;
+				monkey_clock[k]=0;
+				eating[k]=0;
+			}
+		}
+	}
+}
+
+int s[21]={0}, light[21]={0}, musicClock[21]={0};
+void Zombie::ItalyShoot( )
+{
+	for(int k=1; k<=bullet_num; ++k)
+	{
+		if(bullet_clock[k]!=0&&delete_zombie[bullet_clock[k]]=0)
+		{
+			if(bullet_clock[k]!=0&&delete_zombie[bullet_clock[k]]==0)
+			{
+				bullet[k]->move(?+(bilyY[k]-1)*?+s[k], ?+(zombie_line[bullet_clock[k]]-1)*?-light[k]); //待填写
+				s[k]+=?; //每秒移动距离
+				if(s[k]+?+(italyY[k]-1)*?>=zombie_x[bullet_clock[k]]+?) //待填写
+				{
+					if(musicClock[k]==0)
+						QSound::play(""); //打击僵尸声音
+					musicClock[k]=1;
+				if(zombie_blood[bullet_clock[k]]<=0)
+				{
+					image=load
+			}
+}
+
+Zombie::~Zombie( )
+{
+
+}
+					
+
+
+
+
+
+
+
+
+
+
+
+
+
+
